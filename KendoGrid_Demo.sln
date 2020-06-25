@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KendoGrid_Demo", "DataTable_Demo\KendoGrid_Demo.csproj", "{640C95BD-DEEC-4C2B-8539-D1CB929D634E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{640C95BD-DEEC-4C2B-8539-D1CB929D634E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{640C95BD-DEEC-4C2B-8539-D1CB929D634E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{640C95BD-DEEC-4C2B-8539-D1CB929D634E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{640C95BD-DEEC-4C2B-8539-D1CB929D634E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A9221E6-B02C-43F0-9E38-B47D2FB9A65F}
+	EndGlobalSection
+EndGlobal

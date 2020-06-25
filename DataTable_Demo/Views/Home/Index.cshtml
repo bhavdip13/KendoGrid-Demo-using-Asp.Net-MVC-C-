@@ -1,0 +1,598 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/1.3.1/css/toastr.css" />
+@*kendo grid css*@
+<link href="~/Content/kendo/kendo.common-material.min.css" rel="stylesheet" />
+<link href="~/Content/kendo/kendo.material.min.css" rel="stylesheet" />
+<link href="~/Content/kendo/kendo.material.mobile.min.css" rel="stylesheet" />
+
+
+<hr />
+<style type="text/css">
+    .customer-photo {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-size: 32px 35px;
+        background-position: center center;
+        vertical-align: middle;
+        line-height: 32px;
+        box-shadow: inset 0 0 1px #999, inset 0 0 10px rgba(0,0,0,.2);
+        margin-left: 5px;
+    }
+
+    .customer-name {
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 32px;
+        padding-left: 3px;
+    }
+</style>
+<style>
+    .red_border {
+        border: 1px solid #e46262;
+    }
+
+    .LoadingDiv {
+        top: 0;
+        left: 0;
+        position: fixed;
+        opacity: 0.97;
+        z-index: 10000000;
+        background: Black;
+        height: 100%;
+        width: 100%;
+        margin: auto;
+    }
+
+    .dataTables_filter {
+        float: right;
+    }
+</style>
+<div class="jumbotron">
+    <div class="container">
+        <h4 class="display-4">Kendo grid with asp.net MVC using Jquery</h4>
+        <p>In this demo I use kendo grid with asp.net mvc c# using jquery, I use custome filtering and template in this grid, I use pagination, filter and sorting client side.</p>
+        <p><a class="btn btn-primary btn-lg" target="_blank" href="https://demos.telerik.com/kendo-ui/grid/index" role="button">Learn more &raquo;</a></p>
+    </div>
+</div>
+<div class="col-md-12">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        <div class="col-md-12">
+            <label>Product Name :</label>
+            <input class="form-control required" type="text" id="txtName" required />
+        </div>
+        <div class="col-md-12">
+            <label>Product Descreption :</label>
+            <textarea class="form-control required" id="txtDesc"></textarea>
+        </div>
+        <div class="col-md-12">
+            <label>Product Price :</label>
+            <input class="form-control required" onkeypress="return isNumberKey(event)" id="txtPrice" type="text" required />
+        </div>
+        <div class="col-md-12">
+            <br />
+            <input id="btnSave" class="btn btn-success" type="button" value="Save Product" />
+            <input id="btnCancel" class="btn btn-danger" type="button" value="Cancel" />
+
+        </div>
+
+    </div>
+    <div class="col-md-4"></div>
+
+
+
+</div>
+<br />
+<div class="col-md-12">
+    <div id="gvProducts" class="" style="width:100%"></div>
+</div>
+<br />
+<div class="jumbotron">
+    <div class="container">
+        <h4 class="display-4">Kendo grid with HTML5/JavaScript source</h4>
+        <p>In this demo you can see how you can easily configure the grid to display data and perform sorting, paging and grouping operations via its built-in settings.</p>
+        <p>There are two possible ways to instantiate a Kendo UI grid:</p>
+        <p>
+            1. From an empty div element. In this case all the Grid settings are provided in the initialization script statement.
+        </p><p>
+            2. From an existing HTML table element. In this case some of the Grid settings can be inferred from the table structure and elements HTML attributes.
+        </p>
+        <p><a class="btn btn-primary btn-lg" target="_blank" href="https://demos.telerik.com/kendo-ui/grid/index" role="button">Learn more &raquo;</a></p>
+    </div>
+   
+</div>
+<div class="col-md-12">
+    <div id="staticgrid" class="" style="width:100%"></div>
+</div>
+<div id="dvLoader" class="LoadingDiv" style="display: none;">
+    <table style="height: 100%; margin: auto;">
+        <tr>
+            <td style="vertical-align: middle;">
+                <center>
+                    <img src="https://nerdylifeofmine.files.wordpress.com/2017/11/loading.gif" alt="Loading" height="85" width="150"/>
+                </center>
+            </td>
+        </tr>
+    </table>
+</div>
+<input type="hidden" id="hdnPID" value="0" />
+
+<!-- jQuery library -->
+<script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+
+<!-- add thids links for the error message-->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/toastr.js/1.3.1/js/toastr.js"></script>
+
+@*kendo grid js*@
+<script src="~/Content/kendo/kendo.all.min.js"></script>
+<script src="~/Content/kendo/kendo.aspnetmvc.min.js"></script>
+<script src="~/Content/kendo/jszip.min.js"></script>
+
+
+<script type="text/javascript">
+    var cacheProducts;
+    $(document).ready(function () {
+
+        display();
+        StaticKendo();
+        $('#toast-container').find('.toast-top-center').removeClass('.toast-top-center');
+        toastr.options = {
+            "closeButton": true,
+            'autoWidth': false,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-center",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "3000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        }
+
+        $("#btnSave").click(function () {
+            var PID = $("#hdnPID").val();
+            var Name = $("#txtName").val();
+            var Desc = $("#txtDesc").val();
+            var Price = parseFloat($("#txtPrice").val()).toFixed(2);
+            if (CheckRequiredFields()) {
+
+                $('#dvLoader').show();
+                $.ajax({
+                    url: '@Url.Action("SaveAndUpdateProduct", "Home")',
+                        type: 'POST',
+                        data: JSON.stringify({ "PID": parseInt(PID), "Name": Name, "Description": Desc, "price": Price }),
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8",
+                        success: function (result) {
+                            $('#dvLoader').hide();
+
+                            if (result.Status == "True") {
+                                toastr.success(result.Message);
+                                clear();
+                                display();
+                            }
+                            else {
+                                toastr.success(result.Message);
+                                clear();
+                                display();
+
+                            }
+                        }
+                    });
+
+                }
+
+        });
+
+        $("#btnCancel").click(function () {
+            clear();
+        });
+
+    });
+        function CheckRequiredFields() {
+            var isValid = true;
+            $('.required').each(function () {
+                if ($.trim($(this).val()) == '') {
+                    isValid = false;
+                    $(this).addClass('red_border');
+
+
+                }
+                else {
+                    $(this).removeClass('red_border');
+
+                }
+            });
+            return isValid;
+        }
+
+        function checkemail(valemail) {
+            var forgetfilter = /^([\w-\.]+)@@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+            if (forgetfilter.test(valemail)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        function clear() {
+            $("#txtName").val("");
+            $("#txtDesc").val("");
+            $("#txtPrice").val("");
+            $('#btnSave').val("Save Product");
+            $("#hdnPID").val(0);
+        }
+        function display() {
+
+            var DateFilter = "";
+            $('#dvLoader').show();
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                serverFiltering: false,
+                serverPaging: false,
+                serverSorting: false,
+                transport: {
+                    read: function (options) {
+                        //var pageSize = "25";
+                        //var page = "1";
+                        //var sortOn = "";
+                        //var sortType = "";
+                        //if (options.data.page != "undefined" && options.data.page != undefined && options.data.page != null) {
+                        //    page = options.data.page;
+                        //}
+                        //if (options.data.pageSize != "undefined" && options.data.pageSize != undefined && options.data.pageSize != null) {
+                        //    pageSize = options.data.pageSize;
+                        //}
+                        //if (options.data.sort != "undefined" && options.data.sort != undefined && options.data.sort != null) {
+                        //    sortOn = options.data.sort[0].field;
+                        //    sortType = options.data.sort[0].dir;
+                        //}
+
+                        var geturl = getRootUrl() + "Home/GetProducts";
+
+                        //DateFilter = "";
+                        //var objFilters = [];
+
+                        //if (!!options.data.filter) {
+                        //    var objFilters = [];
+
+                        //    $.each(options.data.filter.filters, function (index, obj, data) {
+                        //        if (obj.field == 'CreationDate') {
+                        //            var date = new Date(obj.value).getDate();
+                        //            var month = (new Date(obj.value).getMonth()) + 1;
+                        //            var year = new Date(obj.value).getFullYear();
+                        //            DateFilter = (month >= 10 ? month : "0" + month) + "/" + (date >= 10 ? date : "0" + date) + "/" + year;
+                        //            objFilters.push({
+                        //                field: obj.field,
+                        //                operator: 'IsEqualTo',
+                        //                value: DateFilter
+                        //            });
+                        //        }
+                        //        else {
+                        //            DateFilter = "";
+                        //            objFilters.push(obj);
+                        //        }
+                        //    });
+                        //    geturl += "&Filters=" + JSON.stringify(objFilters) + "";
+                        //}
+
+                        $.post({
+                            url: geturl,
+                            dataType: "json",
+                            contentType: "application/json; charset=utf-8",
+                            success: function (result) {
+                                debugger
+                                $('#dvLoader').hide();
+                                if (result.OperationStatus) {
+                                    cacheProducts = result;
+                                    options.success(result);
+                                    if (DateFilter != "") {
+                                        $(".k-textbox.k-FullWidth.k-input").val(DateFilter);
+                                    }
+                                    else {
+                                        $(".k-textbox.k-FullWidth.k-input").val('');
+                                    }
+                                }
+                                else {
+
+                                    options.error(result.OperationMessage);
+                                    if (DateFilter != "") {
+                                        $(".k-textbox.k-FullWidth.k-input").val(DateFilter);
+                                    }
+                                    else {
+                                        $(".k-textbox.k-FullWidth.k-input").val('');
+                                    }
+
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.log(textStatus, errorThrown);
+                                if (DateFilter != "") {
+                                    $(".k-textbox.k-FullWidth.k-input").val(DateFilter);
+                                }
+                                else {
+                                    $(".k-textbox.k-FullWidth.k-input").val('');
+                                }
+
+                                $('#dvLoader').hide();
+                            }
+                        });
+                       
+                    }
+                },
+                serverPaging: true,
+                schema: {
+                    data: "data",
+                    total: "Total",
+                    model: {
+                        fields: {
+                            PID: { type: "string" },
+                            CreationDate: { type: "string" },
+                            Name: { type: "string" },
+                            Description: { type: "string" },
+                            Price: { type: "string" }
+                        }
+                    }
+                },
+                pageSize: 25
+
+            });
+
+            $("#gvProducts").kendoGrid({
+                toolbar: [{ name: 'excel', text: 'Download Exccel' }],
+                excel: {
+                    fileName: "Products.xlsx",
+                    filterable: true,
+                    allPages: true
+                },
+                excelExport: function (e) {
+                    $('#dvLoader').hide();
+                },
+                dataSource: dataSource,
+                scrollable: true,
+                filterable: true,
+                filterable: {
+                    mode: "row",
+                },
+                sortable: true,
+                reorderable: true,
+                resizable: true,
+                pageable: true,
+                height: $(window).height() - 80,
+                noRecords: {
+                    template: "No Records Found."
+                },
+                columns: [
+
+                    {
+                        field: "PID",
+                        width: "100px",
+                        title: "ID",
+                        hidden: true,
+                        attributes: {
+                            class: "PID"
+                        }
+                    },
+
+                    {
+                        field: "CreationDate",
+                        width: "150px",
+                        title: "Date",
+                        template: "#=kendo.toString(kendo.parseDate(CreationDate), 'MM/dd/yyyy')#",
+                        attributes: {
+                            class: "CreationDate"
+                        },
+                        filterable: {
+                            cell: {
+                                template: function (e) {
+                                    e.element.addClass("k-textbox k-FullWidth"),
+                                        e.element.kendoDatePicker({
+                                            format: "MM-dd-yyyy"
+                                        }).on("show", function (e) {
+                                            if (e.date) {
+                                                $(this).data('stickyDate', e.date);
+                                            }
+                                            else {
+                                                $(this).data('stickyDate', null);
+                                            }
+                                        }).on("hide", function (e) {
+                                            var stickyDate = $(this).data('stickyDate');
+                                            if (!e.date && stickyDate) {
+                                                $(this).datepicker('setDate', stickyDate);
+                                                $(this).data('stickyDate', null);
+                                            }
+                                        });
+                                },
+                                operator: "contains",
+                                showOperators: false,
+                            }
+                        }
+                    },
+                    {
+                        field: "Name",
+                        width: "100px",
+                        title: "Product Name",
+                        attributes: {
+                            class: "Name"
+                        },
+                        filterable: {
+                            cell: {
+                                template: function (e) {
+                                    e.element.addClass("k-textbox k-FullWidth")
+                                },
+                                operator: "contains",
+                                showOperators: false,
+                            }
+                        }
+                    },
+                    {
+                        field: "Description",
+                        width: "150px",
+                        title: "Description",
+                        attributes: {
+                            class: "Description"
+                        },
+                        filterable: {
+                            cell: {
+                                template: function (e) {
+                                    e.element.addClass("k-textbox k-FullWidth")
+                                },
+                                operator: "contains",
+                                showOperators: false,
+                            }
+                        }
+                    },
+                    {
+                        field: "Price",
+                        width: "150px",
+                        title: "Price",
+                        attributes: {
+                            class: "Price"
+                        },
+                        filterable: {
+                            cell: {
+                                template: function (e) {
+                                    e.element.addClass("k-textbox k-FullWidth")
+                                },
+                                operator: "contains",
+                                showOperators: false,
+                            }
+                        }
+                    },
+                    {
+                        width: "150px",
+                        title: "Action",
+                        template: function (dataItem) {
+                            return '<input class="btn btn-info" type="button" value="Edit" onclick=EditData(this)>  <input class="btn btn-danger" type="button" value="Delete" onclick=deleteData(this)>';
+                        }
+                    },
+
+                ],
+
+            });
+        }
+    function StaticKendo() {
+        $("#staticgrid").kendoGrid({
+            dataSource: {
+                type: "odata",
+                transport: {
+                    read: "https://demos.telerik.com/kendo-ui/service/Northwind.svc/Customers"
+                },
+                pageSize: 20
+            },
+            height: 550,
+            groupable: true,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+            columns: [{
+                template: "<div class='customer-photo'" +
+                    "style='background-image: url(https://demos.telerik.com/kendo-ui/content/web/Customers/#:data.CustomerID#.jpg);'></div>" +
+                    "<div class='customer-name'>#: ContactName #</div>",
+                field: "ContactName",
+                title: "Contact Name",
+                width: 240
+            }, {
+                field: "ContactTitle",
+                title: "Contact Title"
+            }, {
+                field: "CompanyName",
+                title: "Company Name"
+            }, {
+                field: "Country",
+                width: 150
+            }]
+        });
+    }
+    function deleteData(id) {
+        var PID = parseInt(id);
+        bootbox.confirm({
+            title: 'Remove Customer',
+            message: 'Are you sure want to delete this record?',
+            buttons: {
+                'cancel': {
+                    label: 'No',
+                    className: 'btn-default pull-right'
+                },
+                'confirm': {
+                    label: 'Yes',
+                    className: 'btn-primary margin-right-5'
+                }
+            },
+            callback: function (result) {
+                if (result) {
+                    $('#dvLoader').show();
+                    $.ajax({
+                        url: '@Url.Action("DeleteProduct", "Home")',
+                        type: 'POST',
+                        data: JSON.stringify({ "id": id }),
+                        contentType: 'application/json; charset=utf-8;',
+                        success: function (result) {
+                            display();
+                            $('#dvLoader').hide();
+
+                            if (result.Status == "True") {
+                                toastr.success(result.Message);
+                                clear();
+                            }
+                            else {
+                                toastr.success(result.Message);
+
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+    function EditData(row) {
+        var PID = $(row).closest('tr').find('.PID').html();
+        $("#hdnPID").val(parseInt(PID));
+
+        var Name = $(row).closest('tr').find('.Name').html();
+        $('#txtName').val(Name);
+
+        var Desc = $(row).closest('tr').find('.Description').html();
+        $('#txtDesc').val(Desc);
+
+        var Price = $(row).closest('tr').find('.Price').html();
+        $('#txtPrice').val(Price);
+
+        $('#btnSave').val("Update Product");
+    }
+    function isNumberKey(evt) {
+        var charcode = (evt.which) ? evt.which : evt.keycode
+        if (charcode > 31 && (charcode < 48 || charcode > 58)
+            && evt.keyCode != 35 && evt.keyCode != 36 && evt.keyCode != 37
+            && evt.keyCode != 38 && evt.keyCode != 39 && evt.keyCode != 40
+            && evt.keyCode != 46) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    function getRootUrl() {
+        return window.location.origin
+                ? window.location.origin + '/'
+                : window.location.protocol + '/' + window.location.host + '/';
+
+    }
+</script>
+
+
+
